@@ -22,6 +22,7 @@ import {
 } from "@/lib/ai/content-ai";
 import { StepPersona } from "./StepPersona";
 import { StepStance } from "./StepStance";
+import { StepOtherParams } from "./StepOtherParams";
 import { StepFinal } from "./StepFinal";
 
 interface TopicWizardProps {
@@ -33,7 +34,7 @@ interface TopicWizardProps {
   exploreTags: string[];
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 export function TopicWizard({
   open,
@@ -47,12 +48,17 @@ export function TopicWizard({
     React.useState<PersonaOption | null>(null);
   const [selectedStance, setSelectedStance] =
     React.useState<StanceOption | null>(null);
+  const [toneBlend, setToneBlend] = React.useState(50);
+  const [includeImagePromptHints, setIncludeImagePromptHints] =
+    React.useState(false);
 
   React.useEffect(() => {
     if (!open) return;
     setStep(1);
     setSelectedPersona(null);
     setSelectedStance(null);
+    setToneBlend(50);
+    setIncludeImagePromptHints(false);
   }, [open, topic.title]);
 
   React.useEffect(() => {
@@ -103,6 +109,8 @@ export function TopicWizard({
     mutationFn: async (vars: {
       persona: PersonaOption;
       stance: StanceOption;
+      toneBlend: number;
+      includeImagePromptHints: boolean;
     }) => {
       const keys = getApiKeys();
       if (!resolveContentAiKey(keys).key) throw new Error("NO_KEY");
@@ -110,6 +118,8 @@ export function TopicWizard({
         topic,
         persona: vars.persona,
         stance: vars.stance,
+        toneBlend: vars.toneBlend,
+        includeImagePromptHints: vars.includeImagePromptHints,
       });
     },
     onError: (e: unknown) => {
@@ -138,7 +148,12 @@ export function TopicWizard({
   }, [stancesQuery.isError, stancesQuery.error]);
 
   const runFinal = React.useCallback(
-    (persona: PersonaOption, stance: StanceOption) => {
+    (
+      persona: PersonaOption,
+      stance: StanceOption,
+      tb: number,
+      img: boolean
+    ) => {
       const keys = getApiKeys();
       if (!resolveContentAiKey(keys).key) {
         toast.error(
@@ -148,7 +163,12 @@ export function TopicWizard({
         );
         return;
       }
-      finalMutation.mutate({ persona, stance });
+      finalMutation.mutate({
+        persona,
+        stance,
+        toneBlend: tb,
+        includeImagePromptHints: img,
+      });
     },
     [finalMutation]
   );
@@ -169,16 +189,22 @@ export function TopicWizard({
         return;
       }
       setStep(3);
-      if (selectedPersona) runFinal(selectedPersona, selectedStance);
+      return;
+    }
+    if (step === 3) {
+      if (!selectedPersona || !selectedStance) return;
+      setStep(4);
+      runFinal(selectedPersona, selectedStance, toneBlend, includeImagePromptHints);
       return;
     }
   };
 
   const handleBack = () => {
     if (step === 2) setStep(1);
-    else if (step === 3) {
+    else if (step === 3) setStep(2);
+    else if (step === 4) {
       finalMutation.reset();
-      setStep(2);
+      setStep(3);
     }
   };
 
@@ -187,7 +213,9 @@ export function TopicWizard({
       ? "第一步：选择人设"
       : step === 2
         ? "第二步：责编口径 · 切入角（4 选 1）"
-        : "第三步：写作指令";
+        : step === 3
+          ? "第三步：其他参数"
+          : "第四步：写作指令";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -233,19 +261,30 @@ export function TopicWizard({
         ) : null}
 
         {step === 3 ? (
+          <StepOtherParams
+            toneBlend={toneBlend}
+            onToneBlendChange={setToneBlend}
+            includeImagePromptHints={includeImagePromptHints}
+            onIncludeImagePromptHintsChange={setIncludeImagePromptHints}
+          />
+        ) : null}
+
+        {step === 4 ? (
           <StepFinal
             topic={topic}
             region={region}
             exploreTags={exploreTags}
             persona={selectedPersona}
             stance={selectedStance}
+            toneBlend={toneBlend}
+            includeImagePromptHints={includeImagePromptHints}
             finalPrompt={finalMutation.data ?? null}
             isLoading={finalMutation.isPending}
             onClose={() => onOpenChange(false)}
           />
         ) : null}
 
-        {step < 3 ? (
+        {step < 4 ? (
           <div className="flex flex-wrap justify-between gap-2 pt-2">
             <Button
               type="button"

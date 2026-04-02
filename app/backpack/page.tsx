@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Copy, CheckCircle2, Circle, Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,6 +69,7 @@ export default function BackpackPage() {
         it.topic.summary,
         it.topic.type,
         it.finalPrompt,
+        it.generatedMarkdown ?? "",
         it.stanceLabel,
         it.persona,
       ]
@@ -226,6 +229,29 @@ export default function BackpackPage() {
                     <p className="text-muted-foreground line-clamp-3">
                       {it.finalPrompt}
                     </p>
+                    {it.generatedMarkdown ? (
+                      <details className="group border-border rounded-md border">
+                        <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
+                          <span className="text-primary">
+                            展开成品全文（Markdown）
+                          </span>
+                          {it.articleGeneratedAt ? (
+                            <span className="text-muted-foreground ml-2 text-xs font-normal">
+                              {new Date(it.articleGeneratedAt).toLocaleString(
+                                "zh-CN"
+                              )}
+                            </span>
+                          ) : null}
+                        </summary>
+                        <div
+                          className="border-border max-h-[min(520px,70vh)] overflow-auto border-t px-3 py-3 text-sm leading-relaxed [&_a]:break-all [&_a]:text-primary [&_a]:underline [&_blockquote]:border-muted-foreground/30 [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:text-xs [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-base [&_h3]:font-semibold [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:text-xs [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+                        >
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {it.generatedMarkdown}
+                          </ReactMarkdown>
+                        </div>
+                      </details>
+                    ) : null}
                     <div className="flex flex-wrap gap-2 pt-2">
                       <Button
                         type="button"
@@ -236,6 +262,17 @@ export default function BackpackPage() {
                         <Copy className="mr-2 h-4 w-4" />
                         复制 Prompt
                       </Button>
+                      {it.generatedMarkdown ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCopy(it.generatedMarkdown!)}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          复制全文 MD
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         size="sm"

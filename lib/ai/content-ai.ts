@@ -64,6 +64,8 @@ export async function composeFinalPrompt(
     topic: TopicCard;
     persona: PersonaOption;
     stance: StanceOption;
+    toneBlend: number;
+    includeImagePromptHints: boolean;
   }
 ): Promise<string> {
   const { provider, key } = resolveContentAiKey(keys);
@@ -71,4 +73,19 @@ export async function composeFinalPrompt(
     return zhipu.composeFinalPrompt(key, input);
   }
   return gemini.composeFinalPrompt(key, input);
+}
+
+export async function generateFullArticle(
+  keys: ApiKeys,
+  input: {
+    topic: TopicCard;
+    finalPromptText: string;
+    includeImagePromptHints: boolean;
+  }
+): Promise<string> {
+  const { provider, key } = resolveContentAiKey(keys);
+  if (provider === "zhipu") {
+    return zhipu.generateFullArticle(key, input);
+  }
+  return gemini.generateFullArticle(key, input);
 }

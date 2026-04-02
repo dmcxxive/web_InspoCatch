@@ -36,6 +36,13 @@ export interface BackpackItem {
   finalPrompt: string;
   createdAt: string;
   published: boolean;
+  /** 向导「其他参数」：0=学术论证，100=随意口语 */
+  toneBlend?: number;
+  /** 是否在写作指令中含 AI 搜图/配图说明 */
+  includeImagePromptHints?: boolean;
+  /** 委托 API 生成的成品 Markdown（可选） */
+  generatedMarkdown?: string;
+  articleGeneratedAt?: string;
 }
 
 export interface PersonaOption {

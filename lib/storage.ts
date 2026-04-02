@@ -82,6 +82,27 @@ function isBackpackItem(x: unknown): x is BackpackItem {
       return false;
     }
   }
+  if (o.toneBlend !== undefined && typeof o.toneBlend !== "number") {
+    return false;
+  }
+  if (
+    o.includeImagePromptHints !== undefined &&
+    typeof o.includeImagePromptHints !== "boolean"
+  ) {
+    return false;
+  }
+  if (
+    o.generatedMarkdown !== undefined &&
+    typeof o.generatedMarkdown !== "string"
+  ) {
+    return false;
+  }
+  if (
+    o.articleGeneratedAt !== undefined &&
+    typeof o.articleGeneratedAt !== "string"
+  ) {
+    return false;
+  }
   return (
     typeof o.id === "string" &&
     (o.region === "cn" || o.region === "jp") &&
@@ -103,7 +124,15 @@ export function addBackpackItem(item: BackpackItem): void {
 
 export function updateBackpackItem(
   id: string,
-  patch: Partial<Pick<BackpackItem, "published">>
+  patch: Partial<
+    Pick<
+      BackpackItem,
+      | "published"
+      | "generatedMarkdown"
+      | "articleGeneratedAt"
+      | "finalPrompt"
+    >
+  >
 ): void {
   const items = getBackpack().map((it) =>
     it.id === id ? { ...it, ...patch } : it

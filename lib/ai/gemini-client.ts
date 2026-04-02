@@ -2,10 +2,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { PersonaOption, StanceOption, TopicCard } from "@/lib/types";
 import {
   FINAL_PROMPT_SYSTEM,
+  FULL_ARTICLE_SYSTEM,
   PERSONA_SYSTEM,
   STANCE_SYSTEM,
   WRITING_VOICE_GUIDELINES,
   finalPromptUserPayload,
+  fullArticleUserPayload,
   personaUserPrompt,
   stanceUserPayload,
   structureExtractUserPrompt,
@@ -279,6 +281,8 @@ export async function composeFinalPrompt(
     topic: TopicCard;
     persona: PersonaOption;
     stance: StanceOption;
+    toneBlend: number;
+    includeImagePromptHints: boolean;
   }
 ): Promise<string> {
   try {
@@ -295,6 +299,8 @@ export async function composeFinalPrompt(
       personaDescription: input.persona.description,
       stanceLabel: input.stance.label,
       stanceSummary: input.stance.summary,
+      toneBlend: input.toneBlend,
+      includeImagePromptHints: input.includeImagePromptHints,
     });
 
     const res = await model.generateContent({
@@ -306,7 +312,11 @@ export async function composeFinalPrompt(
       throw new GeminiError("最终指令生成失败", "EMPTY");
     }
 
+    const tb = Math.min(100, Math.max(0, input.toneBlend));
     const fixedHeader = [
+      "【其他参数】",
+      `语气轴：${tb}/100（0=学术论证，100=随意口语）；${input.includeImagePromptHints ? "写作指令内需含 AI 搜图/配图占位说明" : "不要求搜图/配图占位"}`,
+      "",
       "【完整人设｜以下文字须在长文中贯彻，勿删减为一句话】",
       `名称：${input.persona.label}`,
       `说明：${input.persona.description}`,
@@ -323,6 +333,36 @@ export async function composeFinalPrompt(
     ].join("\n");
 
     return `${fixedHeader}${body}`;
+  } catch (e) {
+    if (e instanceof GeminiError) throw e;
+    throw mapGeminiError(e);
+  }
+}
+
+export async function generateFullArticle(
+  apiKey: string,
+  input: {
+    topic: TopicCard;
+    finalPromptText: string;
+    includeImagePromptHints: boolean;
+  }
+): Promise<string> {
+  try {
+    const model = getModel(apiKey, { system: FULL_ARTICLE_SYSTEM });
+    const payload = fullArticleUserPayload({
+      topicTitle: input.topic.title,
+      topicSummary: input.topic.summary,
+      finalPromptText: input.finalPromptText,
+      includeImagePromptHints: input.includeImagePromptHints,
+    });
+    const res = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: payload }] }],
+    });
+    const body = res.response.text()?.trim();
+    if (!body) {
+      throw new GeminiError("成文生成失败", "EMPTY");
+    }
+    return body;
   } catch (e) {
     if (e instanceof GeminiError) throw e;
     throw mapGeminiError(e);
