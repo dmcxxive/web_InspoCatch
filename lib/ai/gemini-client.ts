@@ -2,12 +2,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { PersonaOption, StanceOption, TopicCard } from "@/lib/types";
 import {
   FINAL_PROMPT_SYSTEM,
-  FULL_ARTICLE_SYSTEM,
   PERSONA_SYSTEM,
   STANCE_SYSTEM,
   WRITING_VOICE_GUIDELINES,
   finalPromptUserPayload,
-  fullArticleUserPayload,
   personaUserPrompt,
   stanceUserPayload,
   structureExtractUserPrompt,
@@ -333,36 +331,6 @@ export async function composeFinalPrompt(
     ].join("\n");
 
     return `${fixedHeader}${body}`;
-  } catch (e) {
-    if (e instanceof GeminiError) throw e;
-    throw mapGeminiError(e);
-  }
-}
-
-export async function generateFullArticle(
-  apiKey: string,
-  input: {
-    topic: TopicCard;
-    finalPromptText: string;
-    includeImagePromptHints: boolean;
-  }
-): Promise<string> {
-  try {
-    const model = getModel(apiKey, { system: FULL_ARTICLE_SYSTEM });
-    const payload = fullArticleUserPayload({
-      topicTitle: input.topic.title,
-      topicSummary: input.topic.summary,
-      finalPromptText: input.finalPromptText,
-      includeImagePromptHints: input.includeImagePromptHints,
-    });
-    const res = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: payload }] }],
-    });
-    const body = res.response.text()?.trim();
-    if (!body) {
-      throw new GeminiError("成文生成失败", "EMPTY");
-    }
-    return body;
   } catch (e) {
     if (e instanceof GeminiError) throw e;
     throw mapGeminiError(e);

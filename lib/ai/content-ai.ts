@@ -74,18 +74,3 @@ export async function composeFinalPrompt(
   }
   return gemini.composeFinalPrompt(key, input);
 }
-
-export async function generateFullArticle(
-  keys: ApiKeys,
-  input: {
-    topic: TopicCard;
-    finalPromptText: string;
-    includeImagePromptHints: boolean;
-  }
-): Promise<string> {
-  const { provider, key } = resolveContentAiKey(keys);
-  if (provider === "zhipu") {
-    return zhipu.generateFullArticle(key, input);
-  }
-  return gemini.generateFullArticle(key, input);
-}

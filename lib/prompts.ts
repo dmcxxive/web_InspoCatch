@@ -133,34 +133,6 @@ export function finalPromptUserPayload(input: {
   );
 }
 
-export const FULL_ARTICLE_SYSTEM = `你是资深中文公众号长文作者。用户会提供「写作系统指令」全文（可能经人工编辑）与热点标题/摘要。你的任务是直接产出可发布的完整文章正文。
-
-硬性要求：
-1. 严格遵循用户给出的写作系统指令中的完整人设、选定立场、结构与语气要求；热点摘要仅作背景，事实以指令与合理推断为准，不编造具体日期数字除非指令中已有。
-2. 全文使用 Markdown：使用 ## / ### 小标题，段落清晰；不要输出 JSON 或 XML 包裹。
-3. 若用户指令要求插入搜图/配图占位，请在正文合适位置按指令中的格式写出占位（例如 ![说明](搜图: 关键词)）；若用户指令明确不要配图占位，则不要添加任何图片 Markdown 或搜图注释。
-4. 文章应有引言、主体分节与收尾，篇幅适合公众号长文（宜充实，避免过短）。
-
-仅输出 Markdown 正文，不要前言后语说明。`;
-
-export function fullArticleUserPayload(input: {
-  topicTitle: string;
-  topicSummary: string;
-  finalPromptText: string;
-  includeImagePromptHints: boolean;
-}): string {
-  return JSON.stringify(
-    {
-      hotspotTitle: input.topicTitle,
-      hotspotSummary: input.topicSummary,
-      includeImagePromptHints: input.includeImagePromptHints,
-      writingSystemInstruction: input.finalPromptText.slice(0, 120_000),
-    },
-    null,
-    2
-  );
-}
-
 /** 搜索查询模板（中国区 Metaso） */
 export function metasoSearchQuery(userTag: string): string {
   return `请列出关于 ${userTag} 的最新 5 条热点新闻事件，包含时间、标题和核心看点。材料侧重可核查的事实与多方信息，避免单一软文或营销宣传口径。`;
